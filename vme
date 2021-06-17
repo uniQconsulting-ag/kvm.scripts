@@ -1,0 +1,16 @@
+#!/bin/bash
+
+NAME=$1
+P=$$
+LANG=C
+
+echo $NAME | egrep -q '^[a-z]+[0-9]{2}$' || (echo Usage: $(basename $0) vmNN ; kill -9 $P )
+virsh list | grep $NAME || (echo ERROR: $NAME not running ; kill -9 $P )
+
+if [[ $2 != "--now" ]] ; then
+  echo "GOING TO STOP $NAME"
+  echo "ctrl-c now!"
+  sleep 5
+fi
+
+virsh destroy $NAME > /dev/null
