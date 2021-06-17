@@ -1,1 +1,1 @@
-hostnamectl set-hostname $(awk -F= '$1=="ID" { print substr ($2,2,4) ;}' /etc/os-release)$(hostname -I | awk -F ' ' '{print $1}' | awk -F '.' '{print $4".dev.tux.uqc.ch"}')
+hostnamectl set-hostname $(awk -F= '$1=="ID" { print substr ($2,2,4) ;}' /etc/os-release)$(ip addr show enp1s0 | awk '/ether / {print substr($2,16,19)".dev.tux.uqc.ch"}' )
