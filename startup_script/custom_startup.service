@@ -1,0 +1,11 @@
+[Unit]
+Description=Custom Startup Script
+After=network.target
+
+[Service]
+Type=simple
+ExecStartPre=/bin/sleep 3
+ExecStart=/usr/local/sbin/custom_startup.sh
+
+[Install]
+WantedBy=default.target
