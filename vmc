@@ -1,0 +1,114 @@
+#!/bin/bash
+
+########################
+#        CONFIG
+########################
+
+min_vm_nr=10
+max_vm_nr=40
+
+# paths
+dir_template=/srv/kvm/templates
+dir_vm=/srv/kvm/dev
+dir_tmp=/tmp
+
+# default values
+vm_template="alma"
+vm_vcpu=2
+vm_memory=2097152
+vm_nr=0
+vm_descr=""
+
+# Dist <> MAC table
+declare -A template2mac
+template2mac['cent']='00'
+template2mac['rhel']='01'.
+template2mac['alma']='02'
+
+########################
+#  Argument Processing
+########################
+
+for i in "$@"
+do
+case $i in
+    --vcpu=*)
+      vm_vcpu="${i#*=}"
+    shift
+    ;;
+    --memory=*)
+      vm_memory="${i#*=}"
+    shift
+    ;;
+    --nr=*)
+      vm_nr="${i#*=}"
+    shift
+    ;;
+    --template=*)
+      vm_template="${i#*=}"
+    shift
+    ;;
+    --descr=*)
+      vm_descr="${i#*=}"
+    shift
+    ;;
+    --help)
+      echo "Help is on it's way to the nordpole."
+      exit;
+    shift
+    ;;
+    *)
+        if [[ $i =~ ^[a-z]+[0-9]{2}$ ]]; then
+            vm_template="$(echo $i | sed -E 's;([a-z]+)([0-9]{2});\1;')"
+            vm_nr="$(echo $i | sed -E 's;([a-z]+)([0-9]{2});\2;')"
+        else
+            vm_template=$i
+        fi
+    ;;
+esac
+done
+
+########################
+#        SCRIPT
+########################
+
+# Only if no NR provided
+if [[ $vm_nr == 0 ]] ; then
+  # find next free VM name
+  vm_nr="$(for (( i=$min_vm_nr; i<=$max_vm_nr; i++ )) ; do if ! virsh list --all --title | grep "$vm_template$i" > /dev/null ; then echo $i ; break ; fi ; done)"
+fi
+
+# gnerate full name
+vm_name="$vm_template$vm_nr"
+
+# check if VM is free
+virsh list --all | grep "$vm_name" > /dev/null 2>&1 && (echo ERROR: "$vm_name" exists ; kill -9 $P )
+
+echo "Creating $vm_template VM: $vm_name"
+echo "    Memory: $vm_memory"
+echo "    vCPU:   $vm_vcpu"
+echo "    Description: $vm_descr"
+
+# "Failsave"
+set -e
+
+# generate UUID
+vm_uuid=$(uuidgen)
+
+# Copy Disk
+cp -a $dir_template/$vm_template_template.qcow2 $dir_vm/$vm_name.qcow2
+
+# Prepare Import XML
+sed "s/__NAME__/$vm_name/g" $dir_template/$vm_template_template.xml > $dir_tmp/$vm_name.xml
+sed -i "s/__NR__/$vm_nr/g" $dir_tmp/$vm_name.xml
+sed -i "s/__UUID__/$vm_uuid/g" $dir_tmp/$vm_name.xml
+sed -i "s/__DISK1__/$vm_name.qcow2/g" $dir_tmp/$vm_name.xml
+sed -i "s/__MEMORY__/$vm_memory/g" $dir_tmp/$vm_name.xml
+sed -i "s/__VCPU__/$vm_vcpu/g" $dir_tmp/$vm_name.xml
+sed -i "s/__MAC__/00:00:00:00:${template2mac[$vm_template]}:$vm_nr/g" $dir_tmp/$vm_name.xml
+
+# define new VM
+virsh define $dir_tmp/$vm_name.xml > /dev/null
+
+# start VM
+virsh start $vm_name
