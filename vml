@@ -14,25 +14,24 @@
 
 bold=$(tput bold)
 reset=$(tput sgr0)
+divider========================================
+divider=$divider$divider
 
 
 echo "$bold"
 echo "$(uname -n | tr 'a-z' 'A-Z') ->"
-echo "      commited mem (running VMs): $(virsh list --name | while read vm; do virsh domstats $vm | grep balloon.maximum ; done | cut -d= -f2 | awk '{s+=$0} END {print s/1024/1024" GB"}')"
-echo "      used mem (running VMs): $(virsh list --name | while read vm; do virsh domstats $vm | grep balloon.current ; done | cut -d= -f2 | awk '{s+=$0} END {print s/1024/1024" GB"}')"
+echo "      commited mem (running VMs): $(virsh list --name | while read vm; do virsh domstats $vm | grep balloon.maximum ; done | cut -d= -f2 | awk '{s+=$0$
+echo "      used mem (running VMs): $(virsh list --name | while read vm; do virsh domstats $vm | grep balloon.current ; done | cut -d= -f2 | awk '{s+=$0} EN$
 echo "      virtHost free mem: $(( $(free -t | grep ^Mem: | awk '{print $7}') / 1024 /1024 )) GB"
-echo "      Description: $(virsh desc $vm)"
+echo " "
 
 #virsh list --all --title | sed 's/^/     /g'
 
 
 
-
-
-
-printf "%-5s %-15s %-10s %-5s %-s" "Id" "Name" "State" "vCPUs" "Memory"
+printf "%-5s %-25s %-10s %-5s %-15s %-s" "Id" "Name" "State" "vCPUs" "Memory" "Description"
 echo ""
-echo "------------------------------------------------------------"
+echo $divider
 
 for VM in `virsh list --all | awk '{print $2}' | tail -n+3 | head -n-1`
 do
@@ -40,13 +39,11 @@ do
     STATE="$(virsh dominfo $VM | grep State | cut -f 2- -d ":" | awk '{$1=$1};1')"
     CPU="$(virsh dominfo $VM | grep "CPU(s)" | cut -f 2- -d ":" | awk '{$1=$1};1')"
     MEMORY="$(virsh dominfo $VM | grep "Max memory" | cut -f 2- -d ":" | awk '{$1=$1};1')"
+    DESCR="$(virsh desc --domain $VM)"
 
-    printf "%-5s %-15s %-10s %-5s %-s" "$ID" "$VM" "$STATE" "$CPU" "$MEMORY"
+    printf "%-5s %-25s %-10s %-5s %-15s %-s" "$ID" "$VM" "$STATE" "$CPU" "$MEMORY" "$DESCR"
     echo ""
 done
-
-
-
 
 
 echo $reset
