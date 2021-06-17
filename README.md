@@ -1,10 +1,11 @@
 # kvm.scripts
 ## Script Install
 ### vmx
-Do on Host:
-- put to /srv/kvm/bin/vmx
-- chmod +x /srv/kvm/bin/vmx
-- ln -s /srv/kvm/bin/vmx /usr/local/sbin/vmx
+To Install the Scripts you need to follow these Steps:
+1. Copy / Clone the vmx Files to /srv/kvm/bin/vmx
+2. Grant executing rights to vmx Files `chmod +x /srv/kvm/bin/vmx`
+3. Create Links with `ln -s /srv/kvm/bin/vmx /usr/local/sbin/vmx`
+
 ### Usage
 #### vmc (VM Create)
 Will create a new Virtual Machine running within the development Network.  
